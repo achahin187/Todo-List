@@ -1,0 +1,165 @@
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+<link href="https://unpkg.com/todomvc-app-css@2.1.0/index.css" rel="stylesheet" />
+
+<section class="todoapp">
+    <header class="header">
+        <h1>todos</h1>
+        <input class="new-todo" autocomplete="off" placeholder="What needs to be done?" v-model="newTodo" @keyup.enter="addNew">
+    </header>
+    <section class="main">
+        <input class="toggle-all" id="toggle-all" type="checkbox" v-model="allDone">
+        <label for="toggle-all">Mark all as complete</label>
+
+        <ul class="todo-list">
+            <li class="todo" v-for="todo in filterTodos" :class="{completed:todo.completed,editing:todo == editingTodo}">
+                <div class="view">
+                    <input class="toggle" type="checkbox" v-model="todo.completed">
+                    <label @dblclick="editTodo(todo)">{{ todo.title }}</label>
+                    <button class="destroy" @click="destroy(todo)"></button>
+                </div>
+                <input class="edit" type="text" v-model="todo.title" @keyup.enter="doneEditing()" @keyup.esc="cancelEditing()">
+            </li>
+        </ul>
+    </section>
+    <footer class="footer">
+        <span class="todo-count">
+      <strong>{{ remaningTodo }}</strong> {{ remaningText }} left
+    </span>
+        <ul class="filters">
+            <li><a href="#" @click.prevent="visiblity ='all'" :class="{selected:visiblity=='all'}">All</a></li>
+            <li><a href="#" @click.prevent="visiblity='active'" :class="{selected:visiblity=='active'}">Active</a></li>
+            <li><a href="#" @click.prevent="visiblity ='completed'" :class="{selected:visiblity=='completed'}">Completed</a></li>
+        </ul>
+        <button class="clear-completed" @click="clear_completed">
+      Clear completed
+    </button>
+    </footer>
+</section>
+<footer class="info">
+    <p>Double-click to edit a todo</p>
+</footer>
+
+
+<script type="text/javascript ">
+    var filters = {
+        'all': function(todos) {
+            return todos;
+        },
+        'active': function(todos) {
+            return todos.filter(function(todos) {
+                return !todos.completed;
+
+            });
+
+        },
+        'completed': function(todos) {
+            return todos.filter(function(todos) {
+                return todos.completed;
+
+            });
+
+        },
+
+    }
+    var todos_storage = {
+        fetch: function() {
+            var todos = JSON.parse(localStorage.getItem('todos') || '[]');
+            return todos;
+        },
+        save: function(todos) {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        },
+
+    }
+    new Vue({
+        'el': '.todoapp',
+        data: {
+            todos: todos_storage.fetch(),
+            newTodo: '',
+            visiblity: 'all',
+            editingTodo: null,
+        },
+        computed: {
+            filterTodos: function() {
+                return filters[this.visiblity](this.todos);
+            },
+            remaningTodo: function() {
+                return filters.active(this.todos).length;
+            },
+            remaningText: function() {
+                if (filters.active(this.todos).length > 1) {
+                    return 'items';
+                } else {
+                    return 'item';
+
+                }
+            },
+            allDone: {
+                get: function() {
+                    return this.remaningTodo === 0;
+
+                },
+                set: function(value) {
+                    this.todos.forEach(function(todo) {
+                        todo.completed = value;
+                    });
+                }
+
+            },
+
+        },
+        methods: {
+            destroy: function(todo) {
+                var index = this.todos.indexOf(todo);
+                this.todos.splice(index, 1);
+            },
+            addNew: function() {
+                if (this.newTodo == '') {
+                    return;
+
+                } else {
+                    this.todos.push({
+                        title: this.newTodo,
+                        completed: false,
+                    });
+                    this.newTodo = '';
+                }
+
+            },
+            clear_completed: function() {
+                this.todos = filters.active(this.todos);
+            },
+            editTodo: function(todo) {
+                this.editingTodo = todo;
+                this.oldEditingTodoTitle = todo.title;
+            },
+            doneEditing: function() {
+                if (this.editingTodo.title == '')
+                    this.destroy(this.editingTodo);
+
+
+                this.editingTodo = null;
+
+            },
+            cancelEditing: function() {
+                this.editingTodo.title = this.oldEditingTodoTitle;
+                this.editingTodo = null;
+            }
+        },
+        watch: {
+            todos: {
+                handler: function(todos) {
+                    todos_storage.save(todos);
+
+                },
+                deep: true
+            }
+
+        },
+
+
+
+
+    });
+</script>
